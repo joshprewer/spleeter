@@ -1,19 +1,37 @@
 FROM ubuntu:16.04
 
-# Install python and other scikit-learn runtime dependencies
-# Dependency list from http://scikit-learn.org/stable/developers/advanced_installation.html#installing-build-dependencies
-RUN apt-get update && \
-    apt-get -y install build-essential libatlas-dev wget curl nginx jq libatlas3-base libgcc-5-dev  libgcc-5-dev ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        libatlas-dev \
+        wget \
+        git \
+        curl \
+        nginx \
+        ca-certificates \
+        && rm -rf /var/lib/apt/lists/*
 
-RUN curl -LO http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -bfp /miniconda3 && \
-    rm Miniconda3-latest-Linux-x86_64.sh
+RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh  && \
+     chmod +x ~/miniconda.sh && \
+     ~/miniconda.sh -b -p /opt/conda && \
+     rm ~/miniconda.sh && \
+    /opt/conda/bin/conda install conda-build conda-forge
 
-ENV PATH=/miniconda3/bin:${PATH}
+ENV PATH=/opt/conda/bin:${PATH}
+
+RUN git clone https://github.com/joshprewer/spleeter.git
+RUN cd spleeter && ls && conda create -n spleeter -f requirements.txt
+RUN conda clean -ya
+
+ENV PATH /opt/conda/envs/spleeter/bin:$PATH
+ENV USER spleeter
+
+WORKDIR /spleeter
+
+CMD source activate spleeter
+CMD source ~/.bashrc
 
 RUN conda update -y conda && \
-    conda install -c conda-forge musdb spleeter==1.4.5 flask gevent gunicorn && \
+    conda install -c flask gevent gunicorn && \
         rm -rf /root/.cache
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
@@ -24,3 +42,4 @@ ENV PATH="/opt/program:${PATH}"
 # Set up the program in the image
 COPY api /opt/program
 WORKDIR /opt/program
+RUN chmod 755 serve
