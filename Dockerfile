@@ -14,12 +14,12 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
      chmod +x ~/miniconda.sh && \
      ~/miniconda.sh -b -p /opt/conda && \
      rm ~/miniconda.sh && \
-    /opt/conda/bin/conda install conda-build conda-forge
+    /opt/conda/bin/conda install conda-build
 
 ENV PATH=/opt/conda/bin:${PATH}
 
-RUN git clone https://github.com/joshprewer/spleeter.git
-RUN cd spleeter && ls && conda create -n spleeter -f requirements.txt
+RUN mkdir spleeter
+RUN cd spleeter && ls && conda create -n spleeter
 RUN conda clean -ya
 
 ENV PATH /opt/conda/envs/spleeter/bin:$PATH
@@ -30,8 +30,7 @@ WORKDIR /spleeter
 CMD source activate spleeter
 CMD source ~/.bashrc
 
-RUN conda update -y conda && \
-    conda install -c flask gevent gunicorn && \
+RUN conda install -y -c conda-forge spleeter flask gevent gunicorn && \
         rm -rf /root/.cache
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
